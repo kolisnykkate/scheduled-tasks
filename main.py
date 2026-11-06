@@ -7,8 +7,9 @@
 
 
 from datetime import datetime
-import pandas
-import random
+import pandas as pd
+import datetime as dt
+from random import randint
 import smtplib
 import os
 
@@ -16,23 +17,27 @@ import os
 MY_EMAIL = os.environ.get("MY_EMAIL")
 MY_PASSWORD = os.environ.get("MY_PASSWORD")
 
-today = datetime.now()
-today_tuple = (today.month, today.day)
+today = dt.date.today()
 
-data = pandas.read_csv("birthdays.csv")
-birthdays_dict = {(data_row["month"], data_row["day"])                  : data_row for (index, data_row) in data.iterrows()}
-if today_tuple in birthdays_dict:
-    birthday_person = birthdays_dict[today_tuple]
-    file_path = f"letter_templates/letter_{random.randint(1, 3)}.txt"
-    with open(file_path) as letter_file:
-        contents = letter_file.read()
-        contents = contents.replace("[NAME]", birthday_person["name"])
+data = pd.read_csv("birthdays.csv")
+birthdays_today = data.loc[
+    (data["month"] == today.month) &
+    (data["day"] == today.day)]
+bd_name = birthdays_today["name"].to_string(index=False)
+bd_email = birthdays_today["email"].to_string(index=False)
 
-    with smtplib.SMTP("YOUR EMAIL PROVIDER SMTP SERVER ADDRESS") as connection:
+
+rnd_num = randint(1, 3)
+
+if not birthdays_today.empty:
+    with open(f"letter_templates/letter_{rnd_num}.txt", "r") as file:
+        message = file.read()
+        message = message.replace("[NAME]", bd_name)
+    with smtplib.SMTP("smtp.gmail.com", 587) as connection:
         connection.starttls()
-        connection.login(MY_EMAIL, MY_PASSWORD)
+        connection.login(user=MY_EMAIL, password=MY_PASSWORD)
         connection.sendmail(
             from_addr=MY_EMAIL,
-            to_addrs=birthday_person["email"],
-            msg=f"Subject:Happy Birthday!\n\n{contents}"
+            to_addrs=bd_email,
+            msg=f"Subject:Happy Birthday!\n\n{message}"
         )
