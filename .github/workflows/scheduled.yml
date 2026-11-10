@@ -14,7 +14,7 @@ on:
     # ║                                                                ║
     # ║  Use https://time.is/UTC to find your local time in UTC       ║
     # ╚═══════════════════════════════════════════════════════════════╝
-    - cron: '0 7 * * *'
+    - cron: '17 7 * * *'
 
   # This adds a "Run workflow" button so you can test manually
   workflow_dispatch:
@@ -44,3 +44,14 @@ jobs:
           MY_EMAIL: ${{ secrets.MY_EMAIL }}
           MY_PASSWORD: ${{ secrets.MY_PASSWORD }}
         run: python main.py
+
+      - name: Check execution time
+        run: |
+          echo "UTC time:"
+          date -u
+          echo "Vietnam time:"
+          TZ=Asia/Ho_Chi_Minh date
+          echo "Scheduled event:"
+          echo "${{ github.event.schedule }}"
+          echo "Event type:"
+          echo "${{ github.event_name }}"
